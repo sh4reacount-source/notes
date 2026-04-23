@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OvR Notes</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      background: #090b14;
+      color: #e7eaf8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: radial-gradient(circle at top left, rgba(74, 96, 255, 0.16), transparent 24%),
+                  radial-gradient(circle at bottom right, rgba(119, 231, 255, 0.14), transparent 24%),
+                  #090b14;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.2rem, 4vw, 3rem);
+      letter-spacing: -0.03em;
+    }
+
+    .subtitle {
+      margin: 0.35rem 0 0;
+      color: #a7b0d2;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      place-items: center;
+      padding: 2rem 1rem 1.5rem;
+    }
+
+    .terminal {
+      width: min(100%, 980px);
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(12, 16, 32, 0.96);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+    }
+
+    .terminal-top {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 1rem 1rem 0.9rem;
+      background: rgba(255,255,255,0.04);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .dot {
+      width: 0.85rem;
+      height: 0.85rem;
+      border-radius: 999px;
+      display: inline-block;
+    }
+
+    .dot.red { background: #ff5f57; }
+    .dot.yellow { background: #ffbd2e; }
+    .dot.green { background: #28c840; }
+
+    .terminal-body {
+      padding: 1.25rem;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .prompt {
+      font-size: 0.95rem;
+      color: #9aa4cd;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 420px;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      background: #04060f;
+      color: #ebf0ff;
+      padding: 1rem 1rem 0.95rem;
+      font: 1rem ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      transition: border-color .2s ease;
+    }
+
+    textarea:focus {
+      border-color: #5b7dff;
+      box-shadow: 0 0 0 3px rgba(91, 125, 255, 0.12);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .info {
+      color: #9aa4cd;
+      font-size: 0.95rem;
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 0.95rem 1.35rem;
+      background: #4464ff;
+      color: white;
+      font-size: 0.98rem;
+      cursor: pointer;
+      transition: transform .2s ease, background .2s ease, opacity .2s ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      background: #5f7cff;
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .hint {
+      color: #7a86b5;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .add-note-button {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 999px;
+      border: none;
+      background: #5a74ff;
+      color: white;
+      font-size: 1.85rem;
+      line-height: 0;
+      cursor: pointer;
+      box-shadow: 0 18px 40px rgba(17, 26, 83, 0.35);
+      transition: transform .2s ease, background .2s ease;
+    }
+
+    .add-note-button:hover {
+      transform: translateY(-1px);
+      background: #6f8bff;
+    }
+
+    .notes-grid {
+      display: grid;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .note-card {
+      background: rgba(8, 12, 24, 0.95);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 1rem 1.2rem;
+      min-height: 110px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .note-card time {
+      display: block;
+      color: #7b86b0;
+      font-size: 0.88rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .note-empty {
+      color: #7a86b5;
+      font-size: 1rem;
+      text-align: center;
+      padding: 3rem 1rem;
+      border: 1px dashed rgba(255,255,255,0.12);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      z-index: 20;
+    }
+
+    .modal.hidden {
+      display: none;
+    }
+
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(1, 2, 15, 0.78);
+      backdrop-filter: blur(12px);
+    }
+
+    .modal-content {
+      position: relative;
+      width: min(100%, 760px);
+      max-width: 760px;
+      border-radius: 26px;
+      overflow: hidden;
+      background: rgba(10, 14, 28, 0.98);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 34px 90px rgba(0,0,0,0.4);
+      padding: 1.3rem;
+      display: grid;
+      gap: 1rem;
+      z-index: 21;
+    }
+
+    .modal-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .modal-top h3 {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .button-secondary {
+      background: rgba(255,255,255,0.06);
+      color: #d7dbea;
+    }
+
+    .modal textarea {
+      min-height: 340px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>OvR</h1>
+      <p class="subtitle">A private note hub. Press + to open a new note, then save and close to show it here.</p>
+    </div>
+    <div class="header-actions">
+      <button class="add-note-button" id="newNoteBtn" type="button">+</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="terminal">
+      <div class="terminal-top">
+        <div>
+          <h2>Notes Hub</h2>
+          <p class="prompt">Create notes from your current IP and view all saved notes below.</p>
+        </div>
+        <div class="header-actions">
+          <button class="add-note-button" id="newNoteBtnDuplicate" type="button">+</button>
+        </div>
+      </div>
+
+      <div class="terminal-body">
+        <div class="controls">
+          <div>
+            <div class="info" id="infoText">Checking access...</div>
+            <div class="hint">Access is checked automatically. If allowed, you can create and save notes here.</div>
+          </div>
+        </div>
+        <div class="notes-grid" id="notesGrid">
+          <div class="note-empty" id="emptyState">No notes yet. Click + to add one.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal hidden" id="noteModal">
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="modal-content">
+      <div class="modal-top">
+        <div>
+          <h3>New OvR Note</h3>
+          <p class="prompt">Type your note below and press Save and close to add it to the hub.</p>
+        </div>
+      </div>
+      <textarea id="noteArea" placeholder="Type your note here..." spellcheck="false" autocomplete="off"></textarea>
+      <div class="modal-footer">
+        <button class="button-secondary" id="closeModalBtn" type="button">Close</button>
+        <button id="saveButton" disabled>Save and close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allowedIp = null;
+    let notes = [];
+    const noteArea = document.getElementById('noteArea');
+    const infoText = document.getElementById('infoText');
+    const saveButton = document.getElementById('saveButton');
+    const newNoteBtn = document.getElementById('newNoteBtn');
+    const newNoteBtnDuplicate = document.getElementById('newNoteBtnDuplicate');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const noteModal = document.getElementById('noteModal');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const notesGrid = document.getElementById('notesGrid');
+    const emptyState = document.getElementById('emptyState');
+
+    function setReadOnly(message) {
+      noteArea.disabled = true;
+      saveButton.disabled = true;
+      infoText.textContent = message;
+    }
+
+    function openNoteModal() {
+      noteModal.classList.remove('hidden');
+      noteArea.value = '';
+      saveButton.disabled = true;
+      noteArea.disabled = allowedIp === null;
+      noteArea.focus();
+    }
+
+    function closeNoteModal() {
+      noteModal.classList.add('hidden');
+      noteArea.value = '';
+    }
+
+    function renderNotes() {
+      notesGrid.innerHTML = '';
+      if (!notes.length) {
+        notesGrid.appendChild(emptyState);
+        return;
+      }
+
+      notes.forEach(note => {
+        const card = document.createElement('div');
+        card.className = 'note-card';
+
+        const time = document.createElement('time');
+        time.textContent = new Date(note.savedAt).toLocaleString();
+        card.appendChild(time);
+
+        const text = document.createElement('div');
+        text.textContent = note.text;
+        card.appendChild(text);
+
+        notesGrid.appendChild(card);
+      });
+    }
+
+    function saveNotesToStorage() {
+      localStorage.setItem('ovrNotes', JSON.stringify(notes));
+    }
+
+    function loadNotesFromStorage() {
+      const stored = localStorage.getItem('ovrNotes');
+      if (stored) {
+        try {
+          notes = JSON.parse(stored) || [];
+        } catch (error) {
+          notes = [];
+        }
+      }
+      renderNotes();
+    }
+
+    async function onrender(text) {
+      const payload = {
+        note: text,
+        savedAt: new Date().toISOString(),
+      };
+
+      const response = await fetch('/onrender', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Save failed: ' + response.statusText);
+      }
+
+      return response.json();
+    }
+
+    async function checkIp() {
+      try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        if (!response.ok) throw new Error('IP lookup failed');
+
+        const data = await response.json();
+        const currentIp = data.ip || '';
+        allowedIp = currentIp;
+
+        if (!currentIp) {
+          setReadOnly('Unable to detect IP. Input is disabled until IP validation succeeds.');
+          return;
+        }
+
+        infoText.textContent = 'Access verified. You may create a note.';
+        noteArea.disabled = false;
+      } catch (error) {
+        console.error(error);
+        setReadOnly('Unable to verify IP. Input is disabled until IP validation succeeds.');
+      }
+    }
+
+    async function saveNote() {
+      const text = noteArea.value.trim();
+      if (!text) {
+        infoText.textContent = 'Enter some note text before saving.';
+        return;
+      }
+
+      saveButton.disabled = true;
+      infoText.textContent = 'Saving note...';
+
+      const note = {
+        id: Date.now(),
+        text,
+        savedAt: new Date().toISOString(),
+      };
+
+      try {
+        await onrender(text);
+        infoText.textContent = 'Saved successfully via onrender().';
+      } catch (error) {
+        console.error(error);
+        infoText.textContent = 'Note saved locally; onrender() failed.';
+      }
+
+      notes.unshift(note);
+      saveNotesToStorage();
+      renderNotes();
+      closeNoteModal();
+    }
+
+    noteArea.addEventListener('input', () => {
+      saveButton.disabled = !noteArea.value.trim();
+    });
+
+    newNoteBtn.addEventListener('click', openNoteModal);
+    newNoteBtnDuplicate.addEventListener('click', openNoteModal);
+    closeModalBtn.addEventListener('click', closeNoteModal);
+    modalOverlay.addEventListener('click', closeNoteModal);
+    saveButton.addEventListener('click', saveNote);
+
+    loadNotesFromStorage();
+    checkIp();
+  </script>
+</body>
+</html>
